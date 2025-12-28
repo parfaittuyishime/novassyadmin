@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Novassy Mobile Categories</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../admin/admin.css">
+    <style>
+        body {
+            background: #f8f9fa;
+            display: block;
+            border-top: 4px solid #2ecc71;
+            opacity: 1 !important;
+            transition: none !important;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2ecc71;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .mobile-header {
+            padding: 20px 15px;
+            background: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .add-fab {
+            position: fixed;
+            bottom: 30px;
+            right: 25px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #2ecc71;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            border: none;
+            z-index: 999;
+        }
+
+        .cat-card {
+            background: #fff;
+            border-radius: 15px;
+            margin: 15px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            border: 1px solid #f0f0f0;
+        }
+
+        .cat-card img {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="authCheck"
+        style="position:fixed; top:0; left:0; right:0; bottom:0; background:#fff; z-index:3000; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+        <div class="spinner"></div>
+        <div id="errorMsgCat"
+            style="margin-top:20px; color:red; display:none; padding:15px; background: #f8f9fa; border-radius: 8px; font-size:12px; max-width: 80%; text-align:center; border:1px solid #ddd;">
+        </div>
+    </div>
+
+    <script>
+        if (window.location.protocol === 'file:') {
+            const err = document.getElementById('errorMsgCat');
+            err.innerHTML = "<strong>Security Error:</strong> Navigation blocked. Please host this on a server (or GitHub) to use management features.";
+            err.style.display = 'block';
+        }
+    </script>
+
+    <div class="loading-overlay" id="globalLoading">
+        <div class="spinner"></div>
+        <p style="margin-top: 15px; font-weight: 600;" id="loadingText">Processing...</p>
+    </div>
+
+    <div class="mobile-header">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 style="font-size: 20px; margin:0;">Novassy Admin</h2>
+            <div id="userEmail" style="font-size: 10px; color: #888;"></div>
+        </div>
+        <div style="display:flex; gap: 15px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px;">
+            <a href="products.html" style="text-decoration:none; color:#888; padding: 5px 0;">Products</a>
+            <a href="categories.html"
+                style="text-decoration:none; color:#000; font-weight:700; border-bottom: 2px solid #2ecc71; padding: 5px 0;">Categories</a>
+            <a href="#" id="logoutBtn" style="text-decoration:none; color:#e74c3c; padding: 5px 0;">Logout</a>
+        </div>
+    </div>
+
+    <div id="categoriesList">
+        <!-- Injected -->
+    </div>
+
+    <button class="add-fab" id="openAddModal">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <div class="modal-overlay" id="categoryModal" style="display:none;">
+        <div class="modal-content" style="width: 90%; border-radius: 15px;">
+            <div class="modal-header">
+                <h3>Add Category</h3>
+                <span class="close-modal" id="closeModal">&times;</span>
+            </div>
+            <form id="categoryForm">
+                <div class="form-group">
+                    <label>Category Name</label>
+                    <input type="text" name="name" class="form-control" required placeholder="e.g. Shoes">
+                </div>
+                <div class="form-group">
+                    <label>Icon/Image</label>
+                    <input type="file" id="catImageInput" accept="image/*" class="form-control" required>
+                    <div id="catPreview" style="margin-top:10px; display:none;">
+                        <img id="previewImg" style="width:60px; height:60px; border-radius:8px; object-fit:cover;">
+                    </div>
+                </div>
+                <div style="padding-top: 20px;">
+                    <button type="submit" class="action-btn" style="width: 100%; background: #2ecc71;">
+                        Add Category
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="mobile-categories.js"></script>
+</body>
+
+</html>

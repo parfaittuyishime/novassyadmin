@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Novassy Mobile Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4A90E2;
+            --success: #2ecc71;
+            --dark: #1A1A1A;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .gateway-container {
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 40px;
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        .menu-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .menu-item {
+            background: #fff;
+            padding: 30px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            color: var(--dark);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .menu-item:active {
+            transform: scale(0.95);
+        }
+
+        .menu-item.products {
+            border-color: var(--primary);
+        }
+
+        .menu-item.categories {
+            border-color: var(--success);
+        }
+
+        .menu-item i {
+            font-size: 32px;
+        }
+
+        .menu-item.products i {
+            color: var(--primary);
+        }
+
+        .menu-item.categories i {
+            color: var(--success);
+        }
+
+        .menu-item span {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .footer-note {
+            margin-top: 40px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        #authOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #fff;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="authOverlay">
+        <div id="spinner" class="spinner"></div>
+        <div id="loginFormContainer" style="display:none; width: 100%; max-width: 320px; padding: 20px;">
+            <div class="logo" style="margin-bottom: 20px;">Admin Login</div>
+            <p id="authError" style="color:red; font-size:12px; margin-bottom:15px; display:none;"></p>
+            <form id="mobileLoginForm">
+                <input type="email" id="loginEmail" placeholder="Admin Email" required
+                    style="width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                <input type="password" id="loginPass" placeholder="Password" required
+                    style="width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                <button type="submit" class="menu-item"
+                    style="width: 100%; padding: 15px; border: none; background: var(--primary); color: white;">
+                    Login to Dashboard
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="gateway-container">
+        <div class="logo">Novassy<span>.</span>Admin</div>
+
+        <div class="menu-grid">
+            <a href="products.html" class="menu-item products">
+                <i class="fas fa-box-open"></i>
+                <span>Manage Products</span>
+            </a>
+            <a href="categories.html" class="menu-item categories">
+                <i class="fas fa-tags"></i>
+                <span>Manage Categories</span>
+            </a>
+        </div>
+
+        <div class="footer-note">
+            Quick Mobile Entry for Content Upload
+        </div>
+        <button id="mainLogoutBtn"
+            style="margin-top: 20px; background: none; border: none; color: #e74c3c; font-size: 13px; cursor: pointer;">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+    </div>
+
+    <script type="module">
+        import { auth } from '../js/firebaseConfig.js';
+        import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const ADMIN_EMAIL = 'tuyishimeigisubizoparfait@gmail.com';
+        const authOverlay = document.getElementById('authOverlay');
+        const loginContainer = document.getElementById('loginFormContainer');
+        const spinner = document.getElementById('spinner');
+        const authError = document.getElementById('authError');
+        const loginForm = document.getElementById('mobileLoginForm');
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                if (user.email === ADMIN_EMAIL) {
+                    authOverlay.style.display = 'none';
+                } else {
+                    // Not the authorized admin
+                    authError.textContent = "Unauthorized access. This area is for the master admin only.";
+                    authError.style.display = 'block';
+                    spinner.style.display = 'none';
+                    loginContainer.style.display = 'block';
+                    signOut(auth);
+                }
+            } else {
+                spinner.style.display = 'none';
+                loginContainer.style.display = 'block';
+            }
+        });
+
+        loginForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const pass = document.getElementById('loginPass').value;
+
+            authError.style.display = 'none';
+            spinner.style.display = 'block';
+            loginContainer.style.display = 'none';
+
+            try {
+                if (email !== ADMIN_EMAIL) {
+                    throw new Error("Unauthorized admin email.");
+                }
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (err) {
+                authError.textContent = err.message;
+                authError.style.display = 'block';
+                spinner.style.display = 'none';
+                loginContainer.style.display = 'block';
+            }
+        };
+
+        const logoutBtn = document.getElementById('mainLogoutBtn');
+        if (logoutBtn) logoutBtn.onclick = () => signOut(auth);
+    </script>
+</body>
+
+</html>
